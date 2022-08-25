@@ -1,0 +1,350 @@
+openapi: 3.0.3
+info:
+  title: An API for controlling the iWine smart decanter.
+  version: 0.0.1
+tags:
+  - name: Wine
+
+servers:
+  - url: https://{server_IP}/api/v1
+    description: The IP address of your iWine decanter.
+security:
+  - basicAuth: []
+  - apiKeyAuth: []  
+paths:
+  /volume:
+    get:
+      summary: "Return the current amount of wine."
+      description: "Retrieves the current volume of the wine (in milliliters)."
+      tags:
+        - Wine
+      operationId: get-volume
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/capacity"
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+  /alcohol:
+    get:
+      summary: "Return the alcohol level."
+      description: "Retrieves the amount of alcohol in the wine (in percents)."
+      tags:
+        - Wine
+      operationId: get-alcohol
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/percentage"
+              example: 13
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+  /sugar:
+    get:
+      summary: "Return the sugar level."
+      description: "Retrieves the level of residual sugar (in grams of sugar per litre)."
+      tags:
+        - Wine
+      operationId: get-sugar
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/sweetness"
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+  /temperature:
+    get:
+      summary: "Return the current temperature of wine."
+      description: "Retrieves the current temperature of the wine (in Celsius degrees)."
+      tags:
+        - Wine
+      operationId: get-temperature
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/temperature"
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+    post:
+      summary: "Set the desired temperature for the wine (in Celsius degrees)."
+      description: "Warms up or cools down the wine to the desired temperature (in Celsius degrees)."
+      tags:
+        - "Wine"
+      operationId: set-temperature
+      parameters:
+        - in: query
+          name: target-temperature
+          schema:
+            type: integer
+          description: "An integer denoting target temperature (in Celsius degrees)."
+          required: true       
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                successUrl:
+                  type: string
+                  format: uri
+                  example: /callbacks/temperature/successUrl
+                failedUrl:  
+                  type: string                
+                  format: uri
+                  example: /callbacks/temperature/failedUrl
+              required:
+                - successUrl
+                - failedUrl
+      callbacks:   
+        onSuccess:   
+          "{$request.body#/successUrl}":   
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Reached the target temperature of wine."
+                      required:
+                        - message
+              responses:
+                "200":
+                  description: "OK"
+        onFailure:   
+          "{$request.body#/failedUrl}":   
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Failed to reach the target temperature of wine."
+                      required:
+                        - message
+              responses:
+                "200":
+                  description: "OK"
+      responses:
+        "201":
+          description: "Operation started."
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+  /aerate:    
+    post:
+      summary: "Aerate the wine."
+      description: "Stir the wine for the specified time to aerate it."
+      tags:
+        - "Wine"
+      operationId: aerate
+      parameters:
+        - in: query
+          name: stir-time
+          schema:
+            type: integer
+          description: "Specifies the duration of aerating (in seconds). If ommitted, aerates wine for 3 minutes."          
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                successUrl:
+                  type: string
+                  format: uri
+                  example: /callbacks/aerate/successUrl
+                failedUrl:  
+                  type: string                
+                  format: uri
+                  example: /callbacks/aerate/failedUrl
+              required:
+                - successUrl
+                - failedUrl
+      callbacks:   
+        onSuccess:   
+          "{$request.body#/successUrl}":   
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Wine was aerated."
+                      required:
+                        - message
+              responses:
+                "200":
+                  description: "OK"
+        onFailure:   
+          "{$request.body#/failedUrl}":   
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Failed to aerate the wine."
+                      required:
+                        - message
+              responses:
+                "200":
+                  description: "OK"
+      responses:
+        "201":
+          description: "Operation started."
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"        
+  /type:
+    get:
+      summary: "Return the type of wine."
+      description: "Retrieves the type of wine: white, red, rose or orange. The type is calculated by machine learning algorithms and thus is accompanied by confidence factor."
+      tags:
+        - Wine
+      operationId: get-type
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                type: object
+                properties:
+                  typeName:
+                    schema:
+                    $ref: "#/components/schemas/typeName"
+                  confidence:
+                    schema:
+                    $ref: "#/components/schemas/percentage"
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+  /setpass:
+    post:
+      summary: "Set new password."
+      description: "Specifies a new password to use for authentication."
+      tags:
+        - "Authentication"
+      operationId: set-pass
+      parameters:
+        - in: query
+          name: newpassw
+          schema:
+            type: string
+          description: "A string denoting a new password to use."
+          required: true        
+      responses:
+        "200":
+          description: "Success"          
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+  /setkey:
+    post:
+      summary: Generate a new API key.
+      description: "Generates a new API key to use for authentication."
+      tags:
+        - "Authentication"
+      operationId: set-key      
+      responses:
+        "200":
+          description: "Success"          
+        "401":
+          $ref: "#/components/responses/unauthorizedError"
+        "4XX":
+          $ref: "#/components/responses/clientError"
+components:
+  schemas:
+    capacity:      
+      description: "The current amount of wine in the decanter. Measured in milliliters."
+      type: integer
+      minimum: 0
+      maximum: 3000
+      example: 750
+    percentage:
+      description: "A ratio expressed as a fraction of 100. Measured in percents."
+      type: integer
+      minimum: 0
+      maximum: 100
+      example: 95
+    sweetness :
+      description: "The amount of sugar remaining after fermentation stops. Measured in grams of sugar per litre of wine"
+      type: integer
+      minimum: 0
+      maximum: 1000
+      example: 45
+    temperature:
+      description: "The current temperature of the wine. Measured in Celsius degrees."
+      type: integer
+      minimum: 0
+      maximum: 100
+      example: 15
+    typeName:
+      description: "Possible values for a wine type."
+      type: string
+      enum: ["red", "white", "rose", "orange"]      
+      example: "red"
+  responses:
+    unauthorizedError:
+      description: "Authentication information is missing or invalid."
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+    clientError:
+      description: "Client error."
+      content:
+        text/html:
+          schema:
+            type: string
+          example: "No responce from the server."
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic  
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
