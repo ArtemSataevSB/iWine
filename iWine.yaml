@@ -1,12 +1,26 @@
 openapi: 3.0.3
 info:
-  title: An API for controlling the iWine smart decanter.
+  title: iWine HTTP API
+  description: |
+    # Introduction
+    This is an API for controlling the iWine smart decanter. The API uses OpenAPI specification format.
+
+    # Authentication
+    The iWine decanter offers two forms of authentication:
+      - Basic access authentication
+      - API Key authentication
+      
   version: 0.0.1
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"    
 tags:
   - name: Wine
-
+    description: Obtain information about wine and perform some actions with it.
+  - name: Authentication
+    description: Authentication operations.    
 servers:
-  - url: https://{server_IP}/api/v1
+  - url: https://server_IP/api/v1
     description: The IP address of your iWine decanter.
 security:
   - basicAuth: []
@@ -120,6 +134,7 @@ paths:
         onSuccess:   
           "{$request.body#/successUrl}":   
             post:
+              summary: "Operation was successful."
               requestBody:
                 required: true
                 content:
@@ -135,9 +150,12 @@ paths:
               responses:
                 "200":
                   description: "OK"
+                "4XX":
+                  $ref: "#/components/responses/clientError"
         onFailure:   
           "{$request.body#/failedUrl}":   
             post:
+              summary: "Operation has failed."
               requestBody:
                 required: true
                 content:
@@ -153,6 +171,8 @@ paths:
               responses:
                 "200":
                   description: "OK"
+                "4XX":
+                  $ref: "#/components/responses/clientError"
       responses:
         "201":
           description: "Operation started."
@@ -195,6 +215,7 @@ paths:
         onSuccess:   
           "{$request.body#/successUrl}":   
             post:
+              summary: "Operation was successful."
               requestBody:
                 required: true
                 content:
@@ -210,9 +231,12 @@ paths:
               responses:
                 "200":
                   description: "OK"
+                "4XX":
+                  $ref: "#/components/responses/clientError"
         onFailure:   
           "{$request.body#/failedUrl}":   
             post:
+              summary: "Operation has failed."
               requestBody:
                 required: true
                 content:
@@ -228,6 +252,8 @@ paths:
               responses:
                 "200":
                   description: "OK"
+                "4XX":
+                  $ref: "#/components/responses/clientError"
       responses:
         "201":
           description: "Operation started."
