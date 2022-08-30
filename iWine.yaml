@@ -6,11 +6,8 @@ info:
     Thank you for choosing the iWine smart decanter. 
     The iWine decanter can automatically warm up or cool down the wine, aerate it, measure wine temperature, sugar and alcohol contents, and even determine the type of wine using the patented machine-learning algorithms.
     
-    To control the decanter you can use the iWine Mobile App available on [App Store](https://apps.apple.com/en/app/iWine) or [Google Play](http://play.google.com/store/apps/details?id=com.iwine.app).     
-    Alternatively, you can use the HTTP API to integrate the decanter with any third-party system, platform or device.
-
-    This manual describes the iWine smart decanter HTTP API.
-    
+    To control the decanter, you can use the iWine Mobile App available on [App Store](https://apps.apple.com/en/app/iWine) or [Google Play](http://play.google.com/store/apps/details?id=com.iwine.app).     
+    Alternatively, you can use the HTTP API to integrate the decanter with any third-party system, platform or device. 
     
     # Connecting the device to your Wi-Fi
     When the decanter is turned on for the first time, it creates its own Wi-Fi network with the name "iWine".
@@ -35,22 +32,21 @@ info:
     For example, accessing the [https://Device_IP/api/v1/temperature](https://Device_IP/api/v1/temperature) URL would return the current temperature of a wine. 
     Whereas, accessing the following URL [https://Device_IP/api/v1/aerate?stir-time=180](https://Device_IP/api/v1/aerate?stir-time=180) would stir the wine for 180 seconds to aerate it.
     
-    Most of operations could take some time to perform. For instance, the aeration from the call above will perform for 180 seconds. 
-    Such asynchronous operations are implemented using callbacks. When we invoke the operation, the server sends immediate response that the operation has started, and later receives a callback notifying whether the operation has completed successfully or has failed.
+    Most operations could take some time to perform. For instance, the aeration from the call above will perform for 180 seconds. Such asynchronous operations are implemented using callbacks. When we invoke the operation, the server sends an immediate response that the operation has started, and later receives a callback notifying whether the operation has completed successfully or has failed.
 
     The "Wine operations" section describes what information could be retrieved and what actions the decanter can perform.
     
     ## Authentication
-    Before reading any data or calling any operations you should first authenticate to the built-in web server. The iWine smart decanter offers two forms of authentication: Basic access and API key. They can be used separately or be combined.
+    Before reading any data or calling any operations, you should first authenticate to the built-in web server. The iWine smart decanter offers two forms of authentication: Basic access and API key. They can be used separately or be combined.
 
     ### Basic access authentication
-    When accessing the built-in web server for the first time, you will be prompted for login and password. Further requests to server would contain your credentials in HTTP header fields. 
+    When accessing the built-in web server for the first time, you will be prompted for login and password. Further requests to the server would contain your credentials in HTTP header fields. 
     >The default credentials for the decanter are: "iWine" as login and "inVinoVeritas" as password.
     
     To specify a new password, use the `/setpass` operation.
     
     ### API Key authentication
-    Alternatively to specifying login and password you can specify special API key as URL query parameter. For example, [https://Device_IP/api/v1/temperature?api_key=inVinoVeritas1234567890](https://Device_IP/api/v1/temperature?api_key=inVinoVeritas1234567890).
+    Alternatively to specifying login and password, you can specify special API key as URL query parameter. For example, [https://Device_IP/api/v1/temperature?api_key=inVinoVeritas1234567890](https://Device_IP/api/v1/temperature?api_key=inVinoVeritas1234567890).
     >The default API key for the decanter is: "inVinoVeritas1234567890".
     
     To generate a new API key, use the `/setkey` operation.
@@ -114,7 +110,7 @@ paths:
   /sugar:
     get:
       summary: "Get the sugar level."
-      description: "Retrieves the level of residual sugar (in grams of sugar per litre)."
+      description: "Retrieves the level of residual sugar (in grams of sugar per liter)."
       tags:
         - "Wine operations"
       operationId: get-sugar
@@ -180,7 +176,7 @@ paths:
       description: |
         Warms up or cools down the wine to the desired temperature (in Celsius degrees).
         
-        This is asynchronous operation. When we invoke it, the server sends immediate response and later receives a callback notifying whether the operation has completed successfully or has failed.
+        This is asynchronous operation. When we invoke it, the server sends an immediate response and later receives a callback notifying whether the operation has completed successfully or has failed.
       tags:
         - "Wine operations"
       operationId: set-temperature
@@ -202,12 +198,14 @@ paths:
               type: object
               properties:
                 successUrl:
+                  description: The URL where to notify when the operation has completed successfully.
                   type: string
                   format: uri
                   default: /callbacks/temperature/successUrl
                   example: /callbacks/temperature/successUrl
                 failedUrl:  
-                  type: string                
+                  type: string      
+                  description: The URL where to notify when the operation has failed.          
                   format: uri
                   default: /callbacks/temperature/failedUrl
                   example: /callbacks/temperature/failedUrl
@@ -227,7 +225,9 @@ paths:
                       type: object
                       properties:
                         message:
+                          description: "What to inform on success."
                           type: string
+                          default: "Reached the target temperature of wine."
                           example: "Reached the target temperature of wine."
                       required:
                         - message
@@ -248,7 +248,9 @@ paths:
                       type: object
                       properties:
                         message:
+                          description: "What to inform on failure."
                           type: string
+                          default: "Failed to reach the target temperature of wine."
                           example: "Failed to reach the target temperature of wine."
                       required:
                         - message
@@ -277,7 +279,7 @@ paths:
       description: |
         Stir the wine for the specified time to aerate it.
 
-        This is asynchronous operation. When we invoke it, the server sends immediate response and later receives a callback notifying whether the operation has completed successfully or has failed.
+        This is asynchronous operation. When we invoke it, the server sends an immediate response and later receives a callback notifying whether the operation has completed successfully or has failed.
       tags:
         - "Wine operations"
       operationId: aerate
@@ -302,11 +304,13 @@ paths:
               type: object
               properties:
                 successUrl:
+                  description: The URL where to notify when the operation has completed successfully.
                   type: string
                   format: uri
                   default: /callbacks/aerate/successUrl
                   example: /callbacks/aerate/successUrl
                 failedUrl:  
+                  description: The URL where to notify when the operation has failed.
                   type: string                
                   format: uri
                   default: /callbacks/aerate/failedUrl
@@ -327,7 +331,9 @@ paths:
                       type: object
                       properties:
                         message:
+                          description: "What to inform on success."
                           type: string
+                          default: "Wine was aerated."
                           example: "Wine was aerated."
                       required:
                         - message
@@ -348,7 +354,9 @@ paths:
                       type: object
                       properties:
                         message:
+                          description: "What to inform on failure."
                           type: string
+                          default: "Failed to aerate the wine."
                           example: "Failed to aerate the wine."
                       required:
                         - message
@@ -439,7 +447,7 @@ components:
       maximum: 100
       example: 95
     sweetness :
-      description: "The amount of sugar remaining after fermentation stops. Measured in grams of sugar per litre of wine"
+      description: "The amount of sugar remaining after fermentation stops. Measured in grams of sugar per liter of wine"
       type: integer
       minimum: 0
       maximum: 1000
@@ -488,7 +496,7 @@ components:
   securitySchemes:
     basicAuth:      
       description: |
-        When accessing the built-in web server for the first time, you will be prompted for login and password. Further requests to server would contain your credentials in HTTP header fields. 
+        When accessing the built-in web server for the first time, you will be prompted for login and password. Further requests to the server would contain your credentials in HTTP header fields. 
         >The default credentials for the decanter are: "iWine" as login and "inVinoVeritas" as password.
       
         To specify a new password, use the `/setpass` operation.
@@ -496,7 +504,7 @@ components:
       scheme: basic  
     apiKeyAuth:
       description: |
-        Alternatively to specifying login and password you can specify special API key as URL query parameter.
+        Alternatively to specifying login and password, you can specify special API key as URL query parameter.
         >The default API key for the decanter is: "inVinoVeritas1234567890".
       
         To generate a new API key, use the `/setkey` operation.
