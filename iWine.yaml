@@ -71,9 +71,7 @@ tags:
 servers:
   - url: https://Device_IP/api/v1
     description: The IP address of your iWine decanter.
-security:
-  - basicAuth: []
-  - apiKeyAuth: []  
+
 paths:
   /volume:
     get:
@@ -457,6 +455,7 @@ components:
       type: string
       enum: ["red", "white", "rose", "orange"]      
       example: "red"
+
   responses:
     success:
       description: "Success."      
@@ -466,12 +465,12 @@ components:
             type: string
           example: "Success."
     asynchStart:
-            description: "Operation started."      
-            content:
-              text/html:
-                schema:
-                  type: string
-                example: "Operation started."
+      description: "Operation started."      
+      content:
+        text/html:
+          schema:
+            type: string
+          example: "Operation started."
     unauthorizedError:
       description: "Authentication information is missing or invalid."      
       content:
@@ -487,10 +486,23 @@ components:
             type: string
           example: "No response from the server."
   securitySchemes:
-    basicAuth:
+    basicAuth:      
+      description: |
+        When accessing the built-in web server for the first time, you will be prompted for login and password. Further requests to server would contain your credentials in HTTP header fields. 
+        >The default credentials for the decanter are: "iWine" as login and "inVinoVeritas" as password.
+      
+        To specify a new password, use the `/setpass` operation.
       type: http
       scheme: basic  
     apiKeyAuth:
+      description: |
+        Alternatively to specifying login and password you can specify special API key as URL query parameter.
+        >The default API key for the decanter is: "inVinoVeritas1234567890".
+      
+        To generate a new API key, use the `/setkey` operation.
       type: apiKey
       in: query
       name: api_key
+security:
+        - basicAuth: []
+        - apiKeyAuth: []        
