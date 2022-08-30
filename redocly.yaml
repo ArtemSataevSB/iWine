@@ -11,6 +11,7 @@ lint:
     - recommended
 
 features.openapi:
+  corsProxyUrl: https://cors.redoc.ly  
   generateCodeSamples:
     languages:
       - lang: curl

@@ -1,26 +1,75 @@
 openapi: 3.0.3
 info:
-  title: iWine HTTP API
+  title: iWine Smart Decanter Manual
   description: |
     # Introduction
-    This is an API for controlling the iWine smart decanter. The API uses OpenAPI specification format.
+    Thank you for choosing the iWine smart decanter. 
+    The iWine decanter can automatically warm up or cool down the wine, aerate it, measure wine temperature, sugar and alcohol contents, and even determine the type of wine using the patented machine-learning algorithms.
+    
+    To control the decanter you can use the iWine Mobile App available on [App Store](https://apps.apple.com/en/app/iWine) or [Google Play](http://play.google.com/store/apps/details?id=com.iwine.app).     
+    Alternatively, you can use the HTTP API to integrate the decanter with any third-party system, platform or device.
 
-    # Authentication
-    The iWine decanter offers two forms of authentication:
-      - Basic access authentication
-      - API Key authentication
+    This manual describes the iWine smart decanter HTTP API.
+    
+    
+    # Connecting the device to your Wi-Fi
+    When the decanter is turned on for the first time, it creates its own Wi-Fi network with the name "iWine".
+        
+    1. Connect to the "iWine" network and navigate to [https://192.168.1.1/](https://192.168.1.1/)
+    2. When prompted, specify the credentials to access the built-in web server.     
+    >The default credentials for the decanter are: "iWine" as login and "inVinoVeritas" as password.
+    
+    3. On the home page, select **"Wi-Fi Settings"** tab.
+    4. Specify the name (SSID) of your Wi-Fi network in the **"Network Name"** field and its passphrase in the **"WPA passphrase"** field.
+    5. Press **"Join Network"**.
+
+    The device will reboot and then connect to your Wi-Fi network. 
+    
+    Check your router, to learn what IP address was assigned to the iWine decanter. In the further sections of the manual, the IP address assigned to the iWine decanter will be denoted as **_Device_IP_**.
+
+    To restore factory settings (including the default credentials) and reset network configuration, press the "Reset" button on the device for 3 seconds.
+
+    # How to use iWine HTTP API
+    The iWine smart decanter provides a built-in web server. The iWine Mobile application and third-party systems use the server's HTTP API to retrieve information about wine and perform certain operations on it.
+    
+    For example, accessing the [https://Device_IP/api/v1/temperature](https://Device_IP/api/v1/temperature) URL would return the current temperature of a wine. 
+    Whereas, accessing the following URL [https://Device_IP/api/v1/aerate?stir-time=180](https://Device_IP/api/v1/aerate?stir-time=180) would stir the wine for 180 seconds to aerate it.
+    
+    Most of operations could take some time to perform. For instance, the aeration from the call above will perform for 180 seconds. 
+    Such asynchronous operations are implemented using callbacks. When we invoke the operation, the server sends immediate response that the operation has started, and later receives a callback notifying whether the operation has completed successfully or has failed.
+
+    The "Wine operations" section describes what information could be retrieved and what actions the decanter can perform.
+    
+    ## Authentication
+    Before reading any data or calling any operations you should first authenticate to the built-in web server. The iWine smart decanter offers two forms of authentication: Basic access and API key. They can be used separately or be combined.
+
+    ### Basic access authentication
+    When accessing the built-in web server for the first time, you will be prompted for login and password. Further requests to server would contain your credentials in HTTP header fields. 
+    >The default credentials for the decanter are: "iWine" as login and "inVinoVeritas" as password.
+    
+    To specify a new password, use the `/setpass` operation.
+    
+    ### API Key authentication
+    Alternatively to specifying login and password you can specify special API key as URL query parameter. For example, [https://Device_IP/api/v1/temperature?api_key=inVinoVeritas1234567890](https://Device_IP/api/v1/temperature?api_key=inVinoVeritas1234567890).
+    >The default API key for the decanter is: "inVinoVeritas1234567890".
+    
+    To generate a new API key, use the `/setkey` operation.
+    
       
-  version: 0.0.1
+  version: 1.0.0
   license:
     name: Apache 2.0
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"    
+  x-logo:
+    url: 'https://t4.ftcdn.net/jpg/01/58/38/19/360_F_158381959_9Jlls7OBV4vTdee5DM2SlcdYy107kGNj.jpg'
+    altText: iWine logo
 tags:
-  - name: Wine
-    description: Obtain information about wine and perform some actions with it.
-  - name: Authentication
-    description: Authentication operations.    
+  - name: "Wine operations"
+    description: "Measure the properties of a wine poured into the decanter and perform certain operations on it."
+  - name: "Authentication operations"
+    description: "Helper methods used for authentication to the built-in web server."
 servers:
-  - url: https://server_IP/api/v1
+  - url: https://Device_IP/api/v1
     description: The IP address of your iWine decanter.
 security:
   - basicAuth: []
@@ -28,10 +77,10 @@ security:
 paths:
   /volume:
     get:
-      summary: "Return the current amount of wine."
+      summary: "Get the current amount of wine."
       description: "Retrieves the current volume of the wine (in milliliters)."
       tags:
-        - Wine
+        - "Wine operations"
       operationId: get-volume
       responses:
         "200":
@@ -40,16 +89,17 @@ paths:
             text/plain:
               schema:
                 $ref: "#/components/schemas/capacity"
+              example: 750
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
           $ref: "#/components/responses/clientError"
   /alcohol:
     get:
-      summary: "Return the alcohol level."
+      summary: "Get the alcohol level."
       description: "Retrieves the amount of alcohol in the wine (in percents)."
       tags:
-        - Wine
+        - "Wine operations"
       operationId: get-alcohol
       responses:
         "200":
@@ -65,10 +115,10 @@ paths:
           $ref: "#/components/responses/clientError"
   /sugar:
     get:
-      summary: "Return the sugar level."
+      summary: "Get the sugar level."
       description: "Retrieves the level of residual sugar (in grams of sugar per litre)."
       tags:
-        - Wine
+        - "Wine operations"
       operationId: get-sugar
       responses:
         "200":
@@ -77,16 +127,43 @@ paths:
             text/plain:
               schema:
                 $ref: "#/components/schemas/sweetness"
+              example: 45
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
           $ref: "#/components/responses/clientError"
+  /type:
+            get:
+              summary: "Get the type of wine."
+              description: "Retrieves the type of wine: white, red, rose or orange. The type is calculated by machine learning algorithms and thus is accompanied by confidence factor."
+              tags:
+                - "Wine operations"
+              operationId: get-type
+              responses:
+                "200":
+                  description: "OK"
+                  content:
+                    text/plain:
+                      schema:
+                        type: object
+                        properties:
+                          typeName:
+                            schema:
+                            $ref: "#/components/schemas/typeName"                            
+                          confidence:
+                            schema:
+                            $ref: "#/components/schemas/percentage"
+                      example: {"typeName": "red","confidence": 95}
+                "401":
+                  $ref: "#/components/responses/unauthorizedError"
+                "4XX":
+                  $ref: "#/components/responses/clientError"
   /temperature:
     get:
-      summary: "Return the current temperature of wine."
+      summary: "Get the current temperature of wine."
       description: "Retrieves the current temperature of the wine (in Celsius degrees)."
       tags:
-        - Wine
+        - "Wine operations"
       operationId: get-temperature
       responses:
         "200":
@@ -95,22 +172,29 @@ paths:
             text/plain:
               schema:
                 $ref: "#/components/schemas/temperature"
+              example: 15
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
           $ref: "#/components/responses/clientError"
     post:
-      summary: "Set the desired temperature for the wine (in Celsius degrees)."
-      description: "Warms up or cools down the wine to the desired temperature (in Celsius degrees)."
+      summary: "Set the desired temperature of wine."
+      description: |
+        Warms up or cools down the wine to the desired temperature (in Celsius degrees).
+        
+        This is asynchronous operation. When we invoke it, the server sends immediate response and later receives a callback notifying whether the operation has completed successfully or has failed.
       tags:
-        - "Wine"
+        - "Wine operations"
       operationId: set-temperature
       parameters:
         - in: query
           name: target-temperature
           schema:
-            type: integer
-          description: "An integer denoting target temperature (in Celsius degrees)."
+            $ref: "#/components/schemas/temperature"
+          description: |
+            An integer denoting target temperature (in Celsius degrees). 
+            
+            Target temperature should be between 0 and 100 Celsius degree.
           required: true       
       requestBody:
         required: true
@@ -122,10 +206,12 @@ paths:
                 successUrl:
                   type: string
                   format: uri
+                  default: /callbacks/temperature/successUrl
                   example: /callbacks/temperature/successUrl
                 failedUrl:  
                   type: string                
                   format: uri
+                  default: /callbacks/temperature/failedUrl
                   example: /callbacks/temperature/failedUrl
               required:
                 - successUrl
@@ -149,7 +235,7 @@ paths:
                         - message
               responses:
                 "200":
-                  description: "OK"
+                  $ref: "#/components/responses/success"
                 "4XX":
                   $ref: "#/components/responses/clientError"
         onFailure:   
@@ -170,12 +256,19 @@ paths:
                         - message
               responses:
                 "200":
-                  description: "OK"
+                  $ref: "#/components/responses/success"
                 "4XX":
                   $ref: "#/components/responses/clientError"
       responses:
         "201":
-          description: "Operation started."
+          $ref: "#/components/responses/asynchStart"
+        "400":
+          description: "Invalid parameter. Target temperature should be between 0 and 100 Celsius degree."          
+          content:
+            text/html:
+              schema:
+                type: string
+              example: "Invalid parameter. Target temperature should be between 0 and 100 Celsius degree."
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
@@ -183,16 +276,26 @@ paths:
   /aerate:    
     post:
       summary: "Aerate the wine."
-      description: "Stir the wine for the specified time to aerate it."
+      description: |
+        Stir the wine for the specified time to aerate it.
+
+        This is asynchronous operation. When we invoke it, the server sends immediate response and later receives a callback notifying whether the operation has completed successfully or has failed.
       tags:
-        - "Wine"
+        - "Wine operations"
       operationId: aerate
       parameters:
         - in: query
           name: stir-time
           schema:
             type: integer
-          description: "Specifies the duration of aerating (in seconds). If ommitted, aerates wine for 3 minutes."          
+            minimum: 1
+            maximum: 6000
+            default: 180
+          description: |
+            Specifies the duration of aerating (in seconds). 
+
+            The specified time should be between 1 and 6000 seconds.
+            If omitted, aerates wine for 3 minutes.          
       requestBody:
         required: true
         content:
@@ -203,10 +306,12 @@ paths:
                 successUrl:
                   type: string
                   format: uri
+                  default: /callbacks/aerate/successUrl
                   example: /callbacks/aerate/successUrl
                 failedUrl:  
                   type: string                
                   format: uri
+                  default: /callbacks/aerate/failedUrl
                   example: /callbacks/aerate/failedUrl
               required:
                 - successUrl
@@ -230,7 +335,7 @@ paths:
                         - message
               responses:
                 "200":
-                  description: "OK"
+                  $ref: "#/components/responses/success"
                 "4XX":
                   $ref: "#/components/responses/clientError"
         onFailure:   
@@ -251,58 +356,53 @@ paths:
                         - message
               responses:
                 "200":
-                  description: "OK"
+                  $ref: "#/components/responses/success"
                 "4XX":
                   $ref: "#/components/responses/clientError"
       responses:
         "201":
-          description: "Operation started."
+          $ref: "#/components/responses/asynchStart"
+        "400":
+          description: "Invalid parameter. The specified time should be between 1 and 6000 seconds."
+          content:
+            text/html:
+              schema:
+                type: string
+              example: "Invalid parameter. The specified time should be between 1 and 6000 seconds."
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
           $ref: "#/components/responses/clientError"        
-  /type:
-    get:
-      summary: "Return the type of wine."
-      description: "Retrieves the type of wine: white, red, rose or orange. The type is calculated by machine learning algorithms and thus is accompanied by confidence factor."
-      tags:
-        - Wine
-      operationId: get-type
-      responses:
-        "200":
-          description: "OK"
-          content:
-            text/plain:
-              schema:
-                type: object
-                properties:
-                  typeName:
-                    schema:
-                    $ref: "#/components/schemas/typeName"
-                  confidence:
-                    schema:
-                    $ref: "#/components/schemas/percentage"
-        "401":
-          $ref: "#/components/responses/unauthorizedError"
-        "4XX":
-          $ref: "#/components/responses/clientError"
   /setpass:
     post:
       summary: "Set new password."
       description: "Specifies a new password to use for authentication."
       tags:
-        - "Authentication"
+        - "Authentication operations"
       operationId: set-pass
       parameters:
         - in: query
           name: newpassw
           schema:
-            type: string
-          description: "A string denoting a new password to use."
-          required: true        
+            type: string            
+            minLength: 8
+            pattern: "/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/"
+          description: |
+            A string denoting a new password to use. 
+            
+            Must be 8 characters minimum and contain a mix of upper and lower case letters, as well as digits.
+          required: true
+          example: "5UPPerpa55"        
       responses:
         "200":
-          description: "Success"          
+          $ref: "#/components/responses/success"
+        "400":        
+          description: "Invalid parameter. The specified value should be at least 8 characters long and contain a mix of upper and lower case letters, as well as digits."
+          content:
+              text/html:
+                schema:
+                  type: string
+                example: "Invalid parameter. The specified value should be at least 8 characters long and contain a mix of upper and lower case letters, as well as digits."
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
@@ -312,11 +412,16 @@ paths:
       summary: Generate a new API key.
       description: "Generates a new API key to use for authentication."
       tags:
-        - "Authentication"
+        - "Authentication operations"
       operationId: set-key      
       responses:
         "200":
-          description: "Success"          
+          description: "Returns the newly generated API key."    
+          content:
+            text/plain:
+              schema:
+                type: string              
+              example: "abcdef12345"      
         "401":
           $ref: "#/components/responses/unauthorizedError"
         "4XX":
@@ -353,24 +458,39 @@ components:
       enum: ["red", "white", "rose", "orange"]      
       example: "red"
   responses:
-    unauthorizedError:
-      description: "Authentication information is missing or invalid."
-      headers:
-        WWW_Authenticate:
+    success:
+      description: "Success."      
+      content:
+        text/html:
           schema:
             type: string
+          example: "Success."
+    asynchStart:
+            description: "Operation started."      
+            content:
+              text/html:
+                schema:
+                  type: string
+                example: "Operation started."
+    unauthorizedError:
+      description: "Authentication information is missing or invalid."      
+      content:
+        text/html:
+          schema:
+            type: string
+          example: "Authentication information is missing or invalid."
     clientError:
       description: "Client error."
       content:
         text/html:
           schema:
             type: string
-          example: "No responce from the server."
+          example: "No response from the server."
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic  
     apiKeyAuth:
       type: apiKey
-      in: header
-      name: X-API-Key
+      in: query
+      name: api_key
